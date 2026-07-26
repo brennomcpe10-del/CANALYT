@@ -16,6 +16,14 @@ interface StreamerConfigModalProps {
   simulatedLiveStartTime?: Date | null;
   onStartSimulatedLive?: () => void;
   onStopSimulatedLive?: () => void;
+  onSaveAll?: (allData: {
+    channelInfo: ChannelInfo;
+    vipPlans: VipPlan[];
+    schedule: ScheduleItem[];
+    newsList: NewsItem[];
+    socialLinks: SocialLink[];
+    faqList: FaqItem[];
+  }) => void;
   onSaveChannelInfo: (info: ChannelInfo) => void;
   onResetChannelInfo: () => void;
   onSaveVipPlans: (plans: VipPlan[]) => void;
@@ -37,6 +45,7 @@ export const StreamerConfigModal: React.FC<StreamerConfigModalProps> = ({
   simulatedLiveStartTime,
   onStartSimulatedLive,
   onStopSimulatedLive,
+  onSaveAll,
   onSaveChannelInfo,
   onResetChannelInfo,
   onSaveVipPlans,
@@ -80,12 +89,23 @@ export const StreamerConfigModal: React.FC<StreamerConfigModalProps> = ({
   // Main Save Handler
   const handleSaveAll = (e: React.FormEvent) => {
     e.preventDefault();
-    onSaveChannelInfo(formDataInfo);
-    onSaveVipPlans(localVipPlans);
-    onSaveSchedule(localSchedule);
-    onSaveNews(localNews);
-    onSaveSocialLinks(localLinks);
-    onSaveFaq(localFaq);
+    if (onSaveAll) {
+      onSaveAll({
+        channelInfo: formDataInfo,
+        vipPlans: localVipPlans,
+        schedule: localSchedule,
+        newsList: localNews,
+        socialLinks: localLinks,
+        faqList: localFaq,
+      });
+    } else {
+      onSaveChannelInfo(formDataInfo);
+      onSaveVipPlans(localVipPlans);
+      onSaveSchedule(localSchedule);
+      onSaveNews(localNews);
+      onSaveSocialLinks(localLinks);
+      onSaveFaq(localFaq);
+    }
 
     setSavedSuccess(true);
     setTimeout(() => {

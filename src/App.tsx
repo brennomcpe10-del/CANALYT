@@ -165,6 +165,17 @@ export default function App() {
           setFaqList(data.faqList);
           localStorage.setItem('nexus_faq', JSON.stringify(data.faqList));
         }
+      } else {
+        // Seed initial document in Firestore if it doesn't exist yet
+        setDoc(doc(db, 'channel_config', 'main_config'), {
+          channelInfo,
+          vipPlans,
+          schedule,
+          newsList,
+          socialLinks,
+          faqList,
+          updatedAt: new Date().toISOString(),
+        }, { merge: true }).catch(err => console.error('Error seeding initial Firestore config:', err));
       }
     }, (error) => {
       console.error('Error in Firestore real-time listener:', error);
@@ -173,28 +184,41 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Helper to persist current channel config to Firestore
-  const syncToFirestore = async (override?: {
-    channelInfo?: ChannelInfo;
-    vipPlans?: VipPlan[];
-    schedule?: ScheduleItem[];
-    newsList?: NewsItem[];
-    socialLinks?: SocialLink[];
-    faqList?: FaqItem[];
+  // Handler to save ALL streamer modal config at once in a single Firestore atomic write
+  const handleSaveAllConfig = async (data: {
+    channelInfo: ChannelInfo;
+    vipPlans: VipPlan[];
+    schedule: ScheduleItem[];
+    newsList: NewsItem[];
+    socialLinks: SocialLink[];
+    faqList: FaqItem[];
   }) => {
+    setChannelInfo(data.channelInfo);
+    setVipPlans(data.vipPlans);
+    setSchedule(data.schedule);
+    setNewsList(data.newsList);
+    setSocialLinks(data.socialLinks);
+    setFaqList(data.faqList);
+
+    localStorage.setItem('nexus_channel_info', JSON.stringify(data.channelInfo));
+    localStorage.setItem('nexus_vip_plans', JSON.stringify(data.vipPlans));
+    localStorage.setItem('nexus_schedule', JSON.stringify(data.schedule));
+    localStorage.setItem('nexus_news', JSON.stringify(data.newsList));
+    localStorage.setItem('nexus_social_links', JSON.stringify(data.socialLinks));
+    localStorage.setItem('nexus_faq', JSON.stringify(data.faqList));
+
     try {
-      const configDoc = {
-        channelInfo: override?.channelInfo ?? channelInfo,
-        vipPlans: override?.vipPlans ?? vipPlans,
-        schedule: override?.schedule ?? schedule,
-        newsList: override?.newsList ?? newsList,
-        socialLinks: override?.socialLinks ?? socialLinks,
-        faqList: override?.faqList ?? faqList,
+      await setDoc(doc(db, 'channel_config', 'main_config'), {
+        channelInfo: data.channelInfo,
+        vipPlans: data.vipPlans,
+        schedule: data.schedule,
+        newsList: data.newsList,
+        socialLinks: data.socialLinks,
+        faqList: data.faqList,
         updatedAt: new Date().toISOString(),
-      };
-      await setDoc(doc(db, 'channel_config', 'main_config'), configDoc, { merge: true });
+      }, { merge: true });
     } catch (err) {
-      console.error('Error writing config to Firestore:', err);
+      console.error('Error saving channel_config to Firestore:', err);
     }
   };
 
@@ -265,76 +289,95 @@ export default function App() {
     localStorage.removeItem('nexus_simulated_live');
   };
 
+  // Helper to sync specific field changes to Firestore safely using merge
+  const syncFieldToFirestore = async (partial: {
+    channelInfo?: ChannelInfo;
+    vipPlans?: VipPlan[];
+    schedule?: ScheduleItem[];
+    newsList?: NewsItem[];
+    socialLinks?: SocialLink[];
+    faqList?: FaqItem[];
+  }) => {
+    try {
+      await setDoc(doc(db, 'channel_config', 'main_config'), {
+        ...partial,
+        updatedAt: new Date().toISOString(),
+      }, { merge: true });
+    } catch (err) {
+      console.error('Error syncing partial update to Firestore:', err);
+    }
+  };
+
   // Handlers for Channel Info
   const handleSaveChannelInfo = (updated: ChannelInfo) => {
     setChannelInfo(updated);
-    syncToFirestore({ channelInfo: updated });
+    syncFieldToFirestore({ channelInfo: updated });
   };
 
   const handleResetChannelInfo = () => {
     setChannelInfo(defaultChannelInfo);
     localStorage.removeItem('nexus_channel_info');
-    syncToFirestore({ channelInfo: defaultChannelInfo });
+    syncFieldToFirestore({ channelInfo: defaultChannelInfo });
   };
 
   // Handlers for VIP Plans
   const handleSaveVipPlans = (updatedPlans: VipPlan[]) => {
     setVipPlans(updatedPlans);
-    syncToFirestore({ vipPlans: updatedPlans });
+    syncFieldToFirestore({ vipPlans: updatedPlans });
   };
 
   const handleDeleteVipPlan = (id: string) => {
     const nextPlans = vipPlans.filter(p => p.id !== id);
     setVipPlans(nextPlans);
-    syncToFirestore({ vipPlans: nextPlans });
+    syncFieldToFirestore({ vipPlans: nextPlans });
   };
 
   // Handlers for Schedule
   const handleSaveSchedule = (updatedSchedule: ScheduleItem[]) => {
     setSchedule(updatedSchedule);
-    syncToFirestore({ schedule: updatedSchedule });
+    syncFieldToFirestore({ schedule: updatedSchedule });
   };
 
   const handleDeleteScheduleItem = (id: string) => {
     const nextSchedule = schedule.filter(s => s.id !== id);
     setSchedule(nextSchedule);
-    syncToFirestore({ schedule: nextSchedule });
+    syncFieldToFirestore({ schedule: nextSchedule });
   };
 
   // Handlers for News
   const handleSaveNews = (updatedNews: NewsItem[]) => {
     setNewsList(updatedNews);
-    syncToFirestore({ newsList: updatedNews });
+    syncFieldToFirestore({ newsList: updatedNews });
   };
 
   const handleDeleteNewsItem = (id: string) => {
     const nextNews = newsList.filter(n => n.id !== id);
     setNewsList(nextNews);
-    syncToFirestore({ newsList: nextNews });
+    syncFieldToFirestore({ newsList: nextNews });
   };
 
   // Handlers for Social Links
   const handleSaveSocialLinks = (updatedLinks: SocialLink[]) => {
     setSocialLinks(updatedLinks);
-    syncToFirestore({ socialLinks: updatedLinks });
+    syncFieldToFirestore({ socialLinks: updatedLinks });
   };
 
   const handleDeleteSocialLink = (id: string) => {
     const nextLinks = socialLinks.filter(l => l.id !== id);
     setSocialLinks(nextLinks);
-    syncToFirestore({ socialLinks: nextLinks });
+    syncFieldToFirestore({ socialLinks: nextLinks });
   };
 
   // Handlers for FAQ
   const handleSaveFaq = (updatedFaq: FaqItem[]) => {
     setFaqList(updatedFaq);
-    syncToFirestore({ faqList: updatedFaq });
+    syncFieldToFirestore({ faqList: updatedFaq });
   };
 
   const handleDeleteFaqItem = (id: string) => {
     const nextFaq = faqList.filter(f => f.id !== id);
     setFaqList(nextFaq);
-    syncToFirestore({ faqList: nextFaq });
+    syncFieldToFirestore({ faqList: nextFaq });
   };
 
   // User Profile Handlers (Saved directly to Firestore users collection)
@@ -496,6 +539,7 @@ export default function App() {
           simulatedLiveStartTime={simulatedLiveStartTime}
           onStartSimulatedLive={handleStartSimulatedLive}
           onStopSimulatedLive={handleStopSimulatedLive}
+          onSaveAll={handleSaveAllConfig}
           onSaveChannelInfo={handleSaveChannelInfo}
           onResetChannelInfo={handleResetChannelInfo}
           onSaveVipPlans={handleSaveVipPlans}
