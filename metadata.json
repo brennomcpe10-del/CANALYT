@@ -1,0 +1,6 @@
+{
+  "name": "Portal do Canal & Comunidade",
+  "description": "Site gamer moderno e responsivo para canal de lives, notícias, agenda de transmissões, LivePix e Loja VIP.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
