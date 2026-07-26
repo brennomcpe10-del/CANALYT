@@ -23,6 +23,7 @@ import {
 } from './data/defaultData';
 import { ChannelInfo, ThemeAccent, VipPlan, NewsItem, ScheduleItem, FaqItem, SocialLink, UserProfile } from './types';
 import { checkScheduleLiveStatus, ScheduleLiveStatus } from './utils/scheduleLiveHelper';
+import { db, doc, setDoc, onSnapshot } from './lib/firebase';
 
 export default function App() {
   // User Profile State (saved in localStorage)
@@ -135,7 +136,69 @@ export default function App() {
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [initialConfigTab, setInitialConfigTab] = useState<'geral' | 'vip' | 'agenda' | 'noticias' | 'links' | 'faq'>('geral');
 
-  // Persistence Effects
+  // Real-time Firestore Listener for Global Site Configuration
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, 'channel_config', 'main_config'), (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        if (data.channelInfo) {
+          setChannelInfo(data.channelInfo);
+          localStorage.setItem('nexus_channel_info', JSON.stringify(data.channelInfo));
+        }
+        if (data.vipPlans) {
+          setVipPlans(data.vipPlans);
+          localStorage.setItem('nexus_vip_plans', JSON.stringify(data.vipPlans));
+        }
+        if (data.schedule) {
+          setSchedule(data.schedule);
+          localStorage.setItem('nexus_schedule', JSON.stringify(data.schedule));
+        }
+        if (data.newsList) {
+          setNewsList(data.newsList);
+          localStorage.setItem('nexus_news', JSON.stringify(data.newsList));
+        }
+        if (data.socialLinks) {
+          setSocialLinks(data.socialLinks);
+          localStorage.setItem('nexus_social_links', JSON.stringify(data.socialLinks));
+        }
+        if (data.faqList) {
+          setFaqList(data.faqList);
+          localStorage.setItem('nexus_faq', JSON.stringify(data.faqList));
+        }
+      }
+    }, (error) => {
+      console.error('Error in Firestore real-time listener:', error);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Helper to persist current channel config to Firestore
+  const syncToFirestore = async (override?: {
+    channelInfo?: ChannelInfo;
+    vipPlans?: VipPlan[];
+    schedule?: ScheduleItem[];
+    newsList?: NewsItem[];
+    socialLinks?: SocialLink[];
+    faqList?: FaqItem[];
+  }) => {
+    try {
+      const configDoc = {
+        channelInfo: override?.channelInfo ?? channelInfo,
+        vipPlans: override?.vipPlans ?? vipPlans,
+        schedule: override?.schedule ?? schedule,
+        newsList: override?.newsList ?? newsList,
+        socialLinks: override?.socialLinks ?? socialLinks,
+        faqList: override?.faqList ?? faqList,
+        updatedAt: new Date().toISOString(),
+      };
+      await setDoc(doc(db, 'channel_config', 'main_config'), configDoc, { merge: true });
+    } catch (err) {
+      console.error('Error writing config to Firestore:', err);
+    }
+  };
+
+  // Local Persistence Effects
   useEffect(() => {
     localStorage.setItem('nexus_channel_info', JSON.stringify(channelInfo));
   }, [channelInfo]);
@@ -205,63 +268,94 @@ export default function App() {
   // Handlers for Channel Info
   const handleSaveChannelInfo = (updated: ChannelInfo) => {
     setChannelInfo(updated);
+    syncToFirestore({ channelInfo: updated });
   };
 
   const handleResetChannelInfo = () => {
     setChannelInfo(defaultChannelInfo);
     localStorage.removeItem('nexus_channel_info');
+    syncToFirestore({ channelInfo: defaultChannelInfo });
   };
 
   // Handlers for VIP Plans
   const handleSaveVipPlans = (updatedPlans: VipPlan[]) => {
     setVipPlans(updatedPlans);
+    syncToFirestore({ vipPlans: updatedPlans });
   };
 
   const handleDeleteVipPlan = (id: string) => {
-    setVipPlans(prev => prev.filter(p => p.id !== id));
+    const nextPlans = vipPlans.filter(p => p.id !== id);
+    setVipPlans(nextPlans);
+    syncToFirestore({ vipPlans: nextPlans });
   };
 
   // Handlers for Schedule
   const handleSaveSchedule = (updatedSchedule: ScheduleItem[]) => {
     setSchedule(updatedSchedule);
+    syncToFirestore({ schedule: updatedSchedule });
   };
 
   const handleDeleteScheduleItem = (id: string) => {
-    setSchedule(prev => prev.filter(s => s.id !== id));
+    const nextSchedule = schedule.filter(s => s.id !== id);
+    setSchedule(nextSchedule);
+    syncToFirestore({ schedule: nextSchedule });
   };
 
   // Handlers for News
   const handleSaveNews = (updatedNews: NewsItem[]) => {
     setNewsList(updatedNews);
+    syncToFirestore({ newsList: updatedNews });
   };
 
   const handleDeleteNewsItem = (id: string) => {
-    setNewsList(prev => prev.filter(n => n.id !== id));
+    const nextNews = newsList.filter(n => n.id !== id);
+    setNewsList(nextNews);
+    syncToFirestore({ newsList: nextNews });
   };
 
   // Handlers for Social Links
   const handleSaveSocialLinks = (updatedLinks: SocialLink[]) => {
     setSocialLinks(updatedLinks);
+    syncToFirestore({ socialLinks: updatedLinks });
   };
 
   const handleDeleteSocialLink = (id: string) => {
-    setSocialLinks(prev => prev.filter(l => l.id !== id));
+    const nextLinks = socialLinks.filter(l => l.id !== id);
+    setSocialLinks(nextLinks);
+    syncToFirestore({ socialLinks: nextLinks });
   };
 
   // Handlers for FAQ
   const handleSaveFaq = (updatedFaq: FaqItem[]) => {
     setFaqList(updatedFaq);
+    syncToFirestore({ faqList: updatedFaq });
   };
 
   const handleDeleteFaqItem = (id: string) => {
-    setFaqList(prev => prev.filter(f => f.id !== id));
+    const nextFaq = faqList.filter(f => f.id !== id);
+    setFaqList(nextFaq);
+    syncToFirestore({ faqList: nextFaq });
   };
 
-  // User Profile Handlers
-  const handleRegister = (profile: UserProfile) => {
+  // User Profile Handlers (Saved directly to Firestore users collection)
+  const handleRegister = async (profile: UserProfile) => {
     setCurrentUserProfile(profile);
     localStorage.setItem('nexus_user_profile', JSON.stringify(profile));
     setIsRegisterModalOpen(false);
+
+    try {
+      const userDocId = profile.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+      await setDoc(doc(db, 'users', userDocId), {
+        name: profile.name,
+        email: profile.email.toLowerCase().trim(),
+        minecraftNick: profile.minecraftNick || '',
+        discordNametag: profile.discordNametag || '',
+        registeredAt: profile.registeredAt || new Date().toISOString(),
+        lastLoginAt: new Date().toISOString(),
+      }, { merge: true });
+    } catch (err) {
+      console.error('Error saving user profile to Firestore database:', err);
+    }
   };
 
   const handleLogout = () => {

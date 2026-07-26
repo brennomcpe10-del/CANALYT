@@ -1,0 +1,33 @@
+{
+  "entities": {
+    "channel_config": {
+      "title": "Channel Config",
+      "description": "Global streamer channel configuration, VIP plans, schedules, news, FAQs, and social links.",
+      "type": "object",
+      "properties": {
+        "channelInfo": { "type": "object" },
+        "vipPlans": { "type": "array" },
+        "schedule": { "type": "array" },
+        "newsList": { "type": "array" },
+        "faqList": { "type": "array" },
+        "socialLinks": { "type": "array" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["channelInfo"]
+    },
+    "users": {
+      "title": "Registered Users",
+      "description": "Profiles of registered visitors and community members.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "minecraftNick": { "type": "string" },
+        "discordNametag": { "type": "string" },
+        "registeredAt": { "type": "string" },
+        "lastLoginAt": { "type": "string" }
+      },
+      "required": ["name", "email"]
+    }
+  }
+}
