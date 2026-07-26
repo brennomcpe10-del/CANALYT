@@ -129,7 +129,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
               }`}
             />
             <p className="text-[11px] text-gray-400 mt-1">
-              * Apenas o e-mail <strong className="text-red-400">brennomcpe10@gmail.com</strong> possui privilégios de Administrador para editar o site.
+              * O e-mail cadastrado concede acesso às áreas de membro e benefícios exclusivos.
             </p>
           </div>
 
@@ -173,7 +173,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
               className="w-full py-2 px-3 rounded-xl bg-red-950/40 hover:bg-red-900/50 border border-red-500/30 text-red-300 text-xs font-bold flex items-center justify-center gap-2 transition-all"
             >
               <KeyRound className="w-3.5 h-3.5 text-red-400" />
-              <span>Preencher como Streamer/Admin (brennomcpe10@gmail.com)</span>
+              <span>Preencher como Streamer/Admin</span>
             </button>
           </div>
 

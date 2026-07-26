@@ -102,7 +102,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
               <div>
                 <strong className="text-white">Acesso Total de Administrador Ativo!</strong>
                 <p className="text-[11px] text-gray-300 mt-0.5">
-                  Você está logado com o e-mail autorizado (brennomcpe10@gmail.com) e pode editar todas as configurações do canal.
+                  Você está logado como Administrador e possui permissão para editar todas as configurações do canal.
                 </p>
               </div>
             </div>
@@ -112,7 +112,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
               <div>
                 <strong className="text-gray-300">Acesso de Visitante/Membro</strong>
                 <p className="text-[11px] text-gray-400 mt-0.5">
-                  As configurações de edição do site são restritas ao e-mail <strong className="text-red-400">brennomcpe10@gmail.com</strong>.
+                  As configurações de edição do site são restritas unicamente à conta oficial do Administrador.
                 </p>
               </div>
             </div>

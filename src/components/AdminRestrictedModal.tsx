@@ -36,17 +36,14 @@ export const AdminRestrictedModal: React.FC<AdminRestrictedModalProps> = ({
         </h3>
 
         <p className="text-xs text-gray-300 leading-relaxed mb-4">
-          As configurações e ferramentas de gerenciamento do site são exclusivas para o e-mail do streamer:
+          As configurações e ferramentas de gerenciamento do site são exclusivas para a conta oficial do streamer.
           <br />
-          <strong className="text-red-400 text-sm block my-1.5 p-2 rounded-xl bg-black/40 border border-red-500/20">
-            brennomcpe10@gmail.com
-          </strong>
-          Seu e-mail atual é <span className="text-white font-semibold">{userEmail}</span>.
+          Seu e-mail cadastrado é <span className="text-white font-semibold">{userEmail}</span>.
         </p>
 
         <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-xs text-gray-400 mb-6 flex items-center gap-2 text-left">
           <ShieldAlert className="w-5 h-5 text-yellow-500 flex-shrink-0" />
-          <span>Para editar títulos, links, valores VIP e agenda, faça login com o e-mail do canal.</span>
+          <span>Para editar títulos, links, valores VIP e agenda, conecte-se com a conta do streamer.</span>
         </div>
 
         <div className="flex flex-col gap-2">
@@ -55,7 +52,7 @@ export const AdminRestrictedModal: React.FC<AdminRestrictedModalProps> = ({
             className="w-full py-3 px-4 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-red-950/50"
           >
             <KeyRound className="w-4 h-4" />
-            <span>Entrar como Brenno (brennomcpe10@gmail.com)</span>
+            <span>Entrar como Administrador</span>
           </button>
 
           <button

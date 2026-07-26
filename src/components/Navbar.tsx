@@ -217,7 +217,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   ? 'text-red-400 hover:text-white bg-red-600/20 hover:bg-red-600/30 border-red-500/40' 
                   : 'text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 border-white/10'
               }`}
-              title={isAdmin ? "Painel de Configurações do Streamer" : "Configurações (Exclusivo brennomcpe10@gmail.com)"}
+              title={isAdmin ? "Painel de Configurações do Streamer" : "Configurações (Exclusivo do Administrador)"}
             >
               <Settings className="w-5 h-5" />
               {!isAdmin && <Lock className="w-3 h-3 text-red-400" />}
